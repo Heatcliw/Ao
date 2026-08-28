@@ -1,1 +1,13 @@
+<<<<<<< HEAD
 /target
+=======
+/target/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+>>>>>>> b196779fe78518cae119a0226788c522c9f5215a
