@@ -51,4 +51,9 @@ impl SystemPrompt {
         
         prompt
     }
+    
+    pub fn update_from_profile(&mut self, profile: &Profile) {
+        self.identity = profile.identity.clone();
+        self.personality = profile.personality.clone();
+    }
 }

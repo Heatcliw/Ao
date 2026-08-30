@@ -8,9 +8,35 @@ pub struct FileData {
     pub data: Vec<u8>,
 }
 
-pub fn read<P: AsRef<Path>>(path: P) -> Result<Vec<FileData>> {
-    let path = path.as_ref();
+pub struct FileFilter {
+    pub patterns: Vec<String>,
+}
 
+impl FileFilter {
+    fn is_ignored(&self, path: &Path) -> bool {
+        for pattern in &self.patterns  {
+            if path == Path::new(pattern) {
+                return true;
+            }
+        }
+        false
+    }
+    pub fn add(&mut self, pattern: String) {
+        self.patterns.push(pattern);
+    }
+    pub fn list(&self) -> &Vec<String> {
+        &self.patterns
+    }
+    pub fn new() -> Self {
+        Self { patterns: Vec::new() }
+    }
+}
+
+pub fn read<P: AsRef<Path>>(path: P, filter: &FileFilter,) -> Result<Vec<FileData>> {
+    let path = path.as_ref();
+    if filter.is_ignored(path) {
+        return Ok(vec![]);
+    }
     if path.is_file() {
         return Ok(vec![read_file(path)?]);
     }
@@ -22,8 +48,14 @@ pub fn read<P: AsRef<Path>>(path: P) -> Result<Vec<FileData>> {
             let entry = entry?;
             let file_path = entry.path();
 
+            if filter.is_ignored(&file_path) {
+                continue;
+            }
+
             if file_path.is_file() {
                 files.push(read_file(&file_path)?);
+            } else if file_path.is_dir() {
+                files.extend(read(&file_path, filter)?);
             }
         }
 

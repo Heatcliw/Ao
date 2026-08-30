@@ -47,7 +47,7 @@ impl Client {
             max_tokens: 512,
         }
     }
-    pub async fn send(&self, prompt: &str, profile: &Profile, system_prompt: &SystemPrompt) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn send(&self, prompt: &str, system_prompt: &SystemPrompt) -> Result<String, Box<dyn std::error::Error>> {
         let system_person = system_prompt.build();
         let request = ChatRequest {
             messages: vec![
