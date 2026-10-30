@@ -1,6 +1,6 @@
 use crate::{Profile, SystemPrompt};
 
-pub fn ao_set_identity(profile: &mut Profile,system_prompt: &mut SystemPrompt, value: String) {
+pub fn ao_set_identity(profile: &mut Profile, system_prompt: &mut SystemPrompt, value: String) {
     profile.identity = value;
     system_prompt.update_from_profile(profile);
 }

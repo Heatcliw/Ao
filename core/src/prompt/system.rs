@@ -45,13 +45,13 @@ impl SystemPrompt {
             prompt.push('\n');
         }
 
-        // println!("\n[System Prompt]");
-        // println!("{}", prompt);
-        // println!("[End System Prompt]\n");
-        
+        // info!("\n[System Prompt]");
+        // info!("{}", prompt);
+        // info!("[End System Prompt]\n");
+
         prompt
     }
-    
+
     pub fn update_from_profile(&mut self, profile: &Profile) {
         self.identity = profile.identity.clone();
         self.personality = profile.personality.clone();

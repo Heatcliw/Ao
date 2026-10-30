@@ -1,0 +1,118 @@
+use log::{debug, info};
+use std::path::PathBuf;
+use std::os::unix::process::CommandExt;
+use std::process::{Child, Command, Stdio};
+
+use anyhow::Error;
+
+use std::time::Duration;
+
+use tokio::time::sleep;
+
+pub struct Llama {
+    pub server: Option<Child>,
+    pub executable: String,
+    pub model: String,
+    pub port: u16,
+    pub context: usize,
+    pub gpu_layers: usize,
+}
+
+impl Llama {
+     pub fn new() -> Self {
+        let home = std::env::var_os("HOME")
+            .or_else(|| std::env::var_os("USERPROFILE"))
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from("."));
+
+        let repo = std::env::var_os("AO_REPO")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from("/mnt/repo"));
+
+        let executable = std::env::var_os("LLAMA_SERVER")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                repo.join("llama.cpp")
+                    .join("build")
+                    .join("bin")
+                    .join("llama-server")
+            });
+
+        let model = std::env::var_os("AO_MODEL")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                home.join("models")
+                    .join("qwen2.5-coder-7b")
+                    .join("qwen2.5-coder-7b-instruct-q4_k_m.gguf")
+            });
+
+        Self {
+            server: None,
+            executable: executable.to_string_lossy().into_owned(),
+            model: model.to_string_lossy().into_owned(),
+            port: 8080,
+            context: 4096,
+            gpu_layers: 15,
+        }
+    }
+
+    pub fn start(&mut self) -> Result<(), std::io::Error> {
+        let mut cmd = Command::new(&self.executable);
+        cmd.env(
+            "LD_LIBRARY_PATH",
+            "/mnt/repo/llama.cpp/build/bin",
+            ).arg("-m")
+            .arg(&self.model)
+            .arg("-ngl")
+            .arg(self.gpu_layers.to_string())
+            .arg("-c")
+            .arg(self.context.to_string())
+            .arg("--host")
+            .arg("127.0.0.1")
+            .arg("--port")
+            .arg(self.port.to_string())
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
+
+        unsafe {
+            cmd.before_exec(|| {
+                libc::setsid();
+                Ok(())
+            });
+        }
+
+        self.server = Some(cmd.spawn()?);
+
+        Ok(())
+    }
+    pub fn stop(&mut self) -> Result<(), Error> {
+        if let Some(mut server) = self.server.take() {
+            server.kill()?;
+            server.wait()?;
+        }
+
+        Ok(())
+    }
+    pub async fn check_health(&self) -> Result<bool, reqwest::Error> {
+        let response = reqwest::get(format!("http://127.0.0.1:{}/health", self.port)).await?;
+
+        Ok(response.status().is_success())
+    }
+
+    pub async fn wait_until_ready(&self) -> Result<(), Error> {
+        debug!("[Waiting for llama-server...]");
+
+        loop {
+            if self.check_health().await.unwrap_or(false) {
+                info!("[llama-server ready]");
+                break;
+            }
+
+            debug!("[llama-server health check failed]");
+            sleep(Duration::from_millis(500)).await;
+        }
+
+        Ok(())
+    }
+}

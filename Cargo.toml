@@ -1,11 +1,16 @@
-[package]
-name = "Ao"
+[workspace]
+resolver ="3"
+members =["core","tui"]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
 
-[dependencies]
+[workspace.dependencies]
 anyhow = "1.0.104"
-
+env_logger = "0.11"
+log = "0.4"
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 

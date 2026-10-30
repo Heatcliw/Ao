@@ -1,5 +1,5 @@
+use anyhow::{Result, anyhow};
 use std::{fs, path::Path};
-use anyhow::{anyhow, Result};
 
 pub struct FileData {
     pub name: String,
@@ -14,7 +14,7 @@ pub struct FileFilter {
 
 impl FileFilter {
     fn is_ignored(&self, path: &Path) -> bool {
-        for pattern in &self.patterns  {
+        for pattern in &self.patterns {
             if path == Path::new(pattern) {
                 return true;
             }
@@ -28,11 +28,13 @@ impl FileFilter {
         &self.patterns
     }
     pub fn new() -> Self {
-        Self { patterns: Vec::new() }
+        Self {
+            patterns: Vec::new(),
+        }
     }
 }
 
-pub fn read<P: AsRef<Path>>(path: P, filter: &FileFilter,) -> Result<Vec<FileData>> {
+pub fn read<P: AsRef<Path>>(path: P, filter: &FileFilter) -> Result<Vec<FileData>> {
     let path = path.as_ref();
     if filter.is_ignored(path) {
         return Ok(vec![]);

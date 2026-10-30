@@ -1,3 +1,5 @@
+use log::{debug, info};
+
 use std::process::{Child, Command};
 
 use anyhow::Error;
@@ -17,10 +19,14 @@ pub struct Llama {
 
 impl Llama {
     pub fn new() -> Self {
+        let home = std::env::var("HOME").unwrap_or_else(|_| "/home/Heatcliw".to_string());
         Self {
             server: None,
-            executable: "C:\\llama\\llama-server.exe".to_string(),
-            model: "C:\\llama\\models\\qwen2.5-coder-7b-instruct-q4_k_m.gguf".to_string(),
+            executable: format!("{}/repo/llama.cpp/build/bin/llama-server", home),
+            model: format!(
+                "{}/models/qwen2.5-coder-7b/qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+                home
+            ),
             port: 8080,
             context: 4096,
             gpu_layers: 15,
@@ -40,7 +46,7 @@ impl Llama {
             .arg("--port")
             .arg(self.port.to_string())
             .spawn();
-        
+
         self.server = Some(server?);
 
         Ok(())
@@ -54,21 +60,21 @@ impl Llama {
         Ok(())
     }
     pub async fn check_health(&self) -> Result<bool, reqwest::Error> {
-        let response = reqwest::get(format!("http://127.0.0.1:{}/health", self.port))
-            .await?;
+        let response = reqwest::get(format!("http://127.0.0.1:{}/health", self.port)).await?;
 
         Ok(response.status().is_success())
     }
 
     pub async fn wait_until_ready(&self) -> Result<(), Error> {
-        println!("[Waiting for llama-server...]");
+        debug!("[Waiting for llama-server...]");
 
         loop {
             if self.check_health().await.unwrap_or(false) {
-                println!("[llama-server ready]");
+                info!("[llama-server ready]");
                 break;
             }
 
+            debug!("[llama-server health check failed]");
             sleep(Duration::from_millis(500)).await;
         }
 

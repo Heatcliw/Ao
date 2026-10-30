@@ -1,3 +1,5 @@
+use log::{debug, error, info};
+
 use reqwest::Client as HttpClient;
 use serde::{Deserialize, Serialize};
 
@@ -47,7 +49,11 @@ impl Client {
             max_tokens: 512,
         }
     }
-    pub async fn send(&self, prompt: &str, system_prompt: &SystemPrompt) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn send(
+        &self,
+        prompt: &str,
+        system_prompt: &SystemPrompt,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let system_person = system_prompt.build();
         let request = ChatRequest {
             messages: vec![
@@ -65,21 +71,36 @@ impl Client {
         };
 
         let response = self
-            .http
-            .post(format!("{}/v1/chat/completions", self.address))
-            .json(&request)
-            .send()
-            .await?;
+    .http
+    .post(format!("{}/v1/chat/completions", self.address))
+    .json(&request)
+    .send()
+    .await?;
 
-        let response: ChatResponse = response.json().await?;
-        let content = response
-            .choices
-            .first()
-            .ok_or("LLM returned no choices")?
-            .message
-            .content
-            .clone();
+let status = response.status();
+let body = response.text().await?;
 
+debug!("LLM HTTP status: {}", status);
+debug!("LLM raw response: {}", body);
+
+if !status.is_success() {
+    error!("LLM request failed: HTTP {}: {}", status, body);
+    return Err(format!("LLM returned HTTP {}", status).into());
+}
+
+let response: ChatResponse = serde_json::from_str(&body)?;
+
+let content = response
+        .choices
+        .first()
+        .ok_or("LLM returned no choices")?
+        .message
+        .content
+        .clone();
+
+        if content.is_empty() {
+            error!("LLM returned empty response");
+        }
         Ok(content)
     }
     // pub async fn send(&self, prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
@@ -107,12 +128,12 @@ impl Client {
     //         .send()
     //         .await?;
 
-    //     println!("[HTTP status: {}]", response.status());
+    //     info!("[HTTP status: {}]", response.status());
 
     //     let body = response.text().await?;
 
-    //     println!("[LLM raw response]");
-    //     println!("{}", body);
+    //     info!("[LLM raw response]");
+    //     info!("{}", body);
 
     //     Ok(body)
     // }

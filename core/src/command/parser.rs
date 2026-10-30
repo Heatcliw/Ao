@@ -1,4 +1,3 @@
-
 /// ### Описание
 /// Основной тип команд Ao, объединяющий все категории команд.
 pub enum Command {
@@ -50,8 +49,15 @@ pub enum AppCommand {
     /// :send
     /// ```
     Send,
+    /// ### Описание
+    /// Выводит список команд в исполняемое пространство
+    ///
+    /// ### Пример
+    /// ```text
+    /// :help
+    /// ```
+    Help,
 }
-
 
 /// ### Описание
 /// Команды для работы с файлами и директориями.
@@ -74,7 +80,6 @@ pub enum FileCommand {
     /// :file-ignore ./target
     /// ```
     Ignore(String),
-
 }
 
 /// ### Описание
@@ -115,9 +120,7 @@ pub enum ProfileCommand {
     /// :style Отвечай кратко и по существу.
     /// ```
     Style(String),
-
 }
-
 
 /// ### Описание
 /// Команды для управления llama-server и его параметрами.
@@ -187,12 +190,9 @@ pub enum RequestCommand {
 
 /// ### Описание
 /// Команды для управления памятью Ao.
-pub enum MemoryCommand {
-    
-}
+pub enum MemoryCommand {}
 
 pub fn check_command(input: &str) -> Command {
-    
     if let Some(value) = input.strip_prefix(":identity  ") {
         return Command::Profile(ProfileCommand::Identity(value.to_string()));
     }
@@ -242,6 +242,7 @@ pub fn check_command(input: &str) -> Command {
         ":exit" => Command::App(AppCommand::Exit),
         ":push" => Command::App(AppCommand::Push),
         ":send" => Command::App(AppCommand::Send),
+        ":help" => Command::App(AppCommand::Help),
 
         _ => Command::Unknown,
     }
