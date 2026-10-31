@@ -16,6 +16,8 @@ mod input;
 
 mod ui;
 
+mod buffer;
+
 use app::App;
 
 struct FileLogger {

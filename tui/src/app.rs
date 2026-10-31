@@ -9,7 +9,7 @@ use ratatui::text::{Span, Line};
 use ao_core::AoCore;
 
 use crate::theme::{Theme, THEMES};
-
+use crate::buffer::Buffer;
 use std::io;
 
 pub fn fmt_bytes(bytes: usize) -> String {
@@ -32,6 +32,7 @@ pub struct App {
    pub core: AoCore,
    pub input: String,
    pub output: String,
+   pub buffer: Buffer,
    pub username: String,
 }
 
@@ -50,15 +51,21 @@ impl App {
             theme_index:2,
             input: String::new(),
             output: String::new(),
+            buffer: Buffer::new(),
             username,
         }
     }
 
     pub async fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
+        use crossterm::event::EventStream;
+
+        let mut events = EventStream::new();
+
         while !self.exit {
             terminal.draw(|frame| self.draw(frame))?;
-            self.handle_events().await?;
+            self.handle_events(&mut events).await?;
         }
+
         Ok(())
     }
 }

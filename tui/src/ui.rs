@@ -14,7 +14,7 @@ use crate::{
 impl App {
     pub(crate) fn draw(&self, frame: &mut Frame) {
         let theme = &THEMES[self.theme_index];
-        let input_lines = self.input.lines().count().max(1) as u16;
+        let input_lines = self.buffer.content.lines().count().max(1) as u16;
         let input_height = input_lines + 2;
 
         let chunks = Layout::vertical([
@@ -22,6 +22,24 @@ impl App {
             Constraint::Length(input_height),
         ])
         .split(frame.area());
+
+        let before_cursor = &self.buffer.content[..self.buffer.cursor];
+
+        let cursor_x = before_cursor
+            .lines()
+            .last()
+            .unwrap_or("")
+            .chars()
+            .count() as u16;
+
+        let cursor_y = before_cursor
+            .matches('\n')
+            .count() as u16;
+
+        frame.set_cursor_position((
+            chunks[1].x + 1 + cursor_x,
+            chunks[1].y + 1 + cursor_y,
+        ));
 
         let req_bytes = self
             .core
@@ -85,7 +103,7 @@ impl App {
             .scroll((self.scroll, 0))
             .wrap(ratatui::widgets::Wrap { trim: false });
 
-        let input = Paragraph::new(self.input.as_str())
+        let input = Paragraph::new(self.buffer.content.as_str())
             .style(
                 Style::default()
                     .bg(theme.background)
