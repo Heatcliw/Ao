@@ -81,7 +81,7 @@ fn init_file_logger() {
         }
     }
 }
-
+#[cfg(unix)]
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     init_file_logger();
@@ -100,5 +100,20 @@ async fn main() -> std::io::Result<()> {
         stdout(),
         PopKeyboardEnhancementFlags
     )?;
+    app_result
+}
+
+#[cfg(windows)]
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
+    init_file_logger();
+
+    let mut terminal = ratatui::init();
+
+    let mut app = App::new();
+    let app_result = app.run(&mut terminal).await;
+
+    ratatui::restore();
+
     app_result
 }

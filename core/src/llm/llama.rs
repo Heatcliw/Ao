@@ -1,6 +1,9 @@
 use log::{debug, info};
 use std::path::PathBuf;
+
+#[cfg(unix)]
 use std::os::unix::process::CommandExt;
+
 use std::process::{Child, Command, Stdio};
 
 use anyhow::Error;
@@ -56,12 +59,17 @@ impl Llama {
         }
     }
 
+
     pub fn start(&mut self) -> Result<(), std::io::Error> {
         let mut cmd = Command::new(&self.executable);
+
+        #[cfg(target_os = "linux")]
         cmd.env(
             "LD_LIBRARY_PATH",
             "/mnt/repo/llama.cpp/build/bin",
-            ).arg("-m")
+        );
+
+        cmd.arg("-m")
             .arg(&self.model)
             .arg("-ngl")
             .arg(self.gpu_layers.to_string())
@@ -75,9 +83,13 @@ impl Llama {
             .stdout(Stdio::null())
             .stderr(Stdio::null());
 
+        #[cfg(unix)]
         unsafe {
-            cmd.before_exec(|| {
-                libc::setsid();
+            cmd.pre_exec(|| {
+                if libc::setsid() == -1 {
+                    return Err(std::io::Error::last_os_error());
+                }
+
                 Ok(())
             });
         }
@@ -86,6 +98,7 @@ impl Llama {
 
         Ok(())
     }
+
     pub fn stop(&mut self) -> Result<(), Error> {
         if let Some(mut server) = self.server.take() {
             server.kill()?;
