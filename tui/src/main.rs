@@ -1,10 +1,10 @@
 use crossterm::{
-    event::{KeyboardEnhancementFlags, PushKeyboardEnhancementFlags, PopKeyboardEnhancementFlags },
+    event::{KeyboardEnhancementFlags, PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags},
     execute,
 };
 use log::{Level, LevelFilter, Log, Metadata, Record};
 use std::fs::{self, OpenOptions};
-use std::io::{stdout, Write};
+use std::io::{Write, stdout};
 use std::path::PathBuf;
 use std::sync::Mutex;
 
@@ -17,6 +17,8 @@ mod input;
 mod ui;
 
 mod buffer;
+
+mod hotkeys;
 
 use app::App;
 
@@ -96,10 +98,7 @@ async fn main() -> std::io::Result<()> {
     let app_result = app.run(&mut terminal).await;
 
     ratatui::restore();
-    execute!(
-        stdout(),
-        PopKeyboardEnhancementFlags
-    )?;
+    execute!(stdout(), PopKeyboardEnhancementFlags)?;
     app_result
 }
 

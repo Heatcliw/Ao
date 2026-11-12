@@ -37,4 +37,6 @@ pub use request::*;
 pub use file::*;
 
 pub mod app;
+pub mod project;
 pub use app::AoCore;
+pub use project::{PROJECT, ProjectInfo};

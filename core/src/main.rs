@@ -21,8 +21,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let input = input.trim_end();
 
         match ao.execute(input).await? {
-            Some(result) if result == "exit" => break,
-            Some(result) => info!("Ao: {result}"),
+            Some(result) if result.content == "exit" => break,
+            Some(result) => info!("Ao: {}", result.content),
             None => {}
         }
     }

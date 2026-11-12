@@ -1,16 +1,36 @@
+use ao_core::AoCore;
 use crossterm::event::{self, Event, KeyCode, KeyModifiers};
+use ratatui::style::{Color, Style};
+use ratatui::text::{Line, Span};
 use ratatui::{
     DefaultTerminal, Frame,
     layout::{Alignment, Constraint, Layout},
     widgets::{Block, Paragraph},
 };
-use ratatui::style::{Color, Style,};
-use ratatui::text::{Span, Line};
-use ao_core::AoCore;
 
-use crate::theme::{Theme, THEMES};
 use crate::buffer::Buffer;
+use crate::theme::{THEMES, Theme};
 use std::io;
+
+pub struct UiMessage {
+    pub role: MessageRole,
+    pub content: String,
+    pub stats: MessageStats,
+}
+
+pub enum MessageRole {
+    User,
+    Assistant,
+    System,
+    Error,
+}
+
+pub struct MessageStats {
+    pub bytes: usize,
+    pub tokens: Option<usize>,
+    pub tps: Option<f32>,
+    pub generation_time: Option<f32>,
+}
 
 pub fn fmt_bytes(bytes: usize) -> String {
     if bytes < 1024 {
@@ -25,15 +45,15 @@ pub fn fmt_bytes(bytes: usize) -> String {
 }
 
 pub struct App {
-   pub counter: u8,
-   pub exit: bool,
-   pub scroll: u16,
-   pub theme_index: usize,
-   pub core: AoCore,
-   pub input: String,
-   pub output: String,
-   pub buffer: Buffer,
-   pub username: String,
+    pub counter: u8,
+    pub exit: bool,
+    pub scroll: u16,
+    pub theme_index: usize,
+    pub core: AoCore,
+    pub input: String,
+    pub messages: Vec<UiMessage>,
+    pub buffer: Buffer,
+    pub username: String,
 }
 
 impl App {
@@ -48,9 +68,9 @@ impl App {
             core: AoCore::new(),
             exit: false,
             scroll: 0,
-            theme_index:2,
+            theme_index: 2,
             input: String::new(),
-            output: String::new(),
+            messages: Vec::new(),
             buffer: Buffer::new(),
             username,
         }

@@ -22,7 +22,7 @@ pub struct Llama {
 }
 
 impl Llama {
-     pub fn new() -> Self {
+    pub fn new() -> Self {
         let home = std::env::var_os("HOME")
             .or_else(|| std::env::var_os("USERPROFILE"))
             .map(PathBuf::from)
@@ -59,15 +59,11 @@ impl Llama {
         }
     }
 
-
     pub fn start(&mut self) -> Result<(), std::io::Error> {
         let mut cmd = Command::new(&self.executable);
 
         #[cfg(target_os = "linux")]
-        cmd.env(
-            "LD_LIBRARY_PATH",
-            "/mnt/repo/llama.cpp/build/bin",
-        );
+        cmd.env("LD_LIBRARY_PATH", "/mnt/repo/llama.cpp/build/bin");
 
         cmd.arg("-m")
             .arg(&self.model)
